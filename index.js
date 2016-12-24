@@ -4,7 +4,9 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const CONNECTION_TIMEOUT = 10000;
+const ServerBall = require("./ServerBall.js");
 const players = {};
+var ball = undefined;
 
 app.use( express.static("static")  );
 
@@ -31,6 +33,7 @@ io.on("connection", function(socket){
       role: "player",
       players: players
     });
+    if (playerCount === 1) setInterval(createOrUpdateBall, 100);
     console.log("Joined as player");
   }
   else{
@@ -48,6 +51,15 @@ io.on("connection", function(socket){
 });
 
 //setInterval(()=>console.log(players), 2000);
+function createOrUpdateBall(){
+  if (!ball){
+    ball = new ServerBall();
+  }
+  else {
+    ball.update(players);
+  }
+  io.sockets.emit("ball_update", ball);
+}
 
 app.get("/", function(req,res){
   res.sendFile(__dirname + "/static/index.html");

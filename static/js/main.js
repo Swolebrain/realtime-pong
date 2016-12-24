@@ -6,6 +6,7 @@ const ioClient = io();
 
 let localPlayer = null;
 let remotePlayers = [];
+let ball = undefined;
 
 function gameLoop(){
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -16,6 +17,7 @@ function gameLoop(){
   remotePlayers.forEach(p=>{
     p.render(ctx)
   });
+  if (ball) ball.render(ctx);
   window.requestAnimationFrame(gameLoop);
 }
 gameLoop();
@@ -35,7 +37,6 @@ ioClient.on("player_joined", function(msg){
   if (msg.id === ioClient.id){ //i joined
     for (var playerId in msg.players){
       let pData = msg.players[playerId];
-
       if ( playerId === ioClient.id){
         localPlayer = new Player(pData.x, pData.y, false, ioClient.id);
         localPlayer.initControls(2.5);
@@ -54,9 +55,15 @@ ioClient.on("player_joined", function(msg){
       for (var playerId in msg.players){
         let p = msg.players[playerId];
         if (playerId != ioClient.id)
-        remotePlayers.push(new Player(p.x, p.y, true, playerId));
+          remotePlayers.push(new Player(p.x, p.y, true, playerId));
       }
       console.log(remotePlayers);
     }
   }
+});
+
+ioClient.on("ball_update", function(ballData){
+  if (!ball) ball = new Ball(ballData.x, ballData.y, 20);
+  ball.x = ballData.x;
+  ball.y = ballData.y;
 });
